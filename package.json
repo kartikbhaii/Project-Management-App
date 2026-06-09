@@ -20,11 +20,15 @@
   "license": "ISC",
   "author": "Kartikey Singh",
   "type": "module",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "dev": "node index.js"
+    "dev": "nodemon app.js",
+    "start": "node app.js"
   },
   "devDependencies": {
     "prettier": "3.8.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
   }
 }
