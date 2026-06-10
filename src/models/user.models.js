@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import bcrypt from "bcrypt"
 
 const userSchema = new mongoose.Schema(
  {
@@ -60,6 +61,15 @@ const userSchema = new mongoose.Schema(
   },
 
 )
+
+// encrypting/hash the password before saving to mongoose so it doent save password as plain text.
+
+userSchema.pre("save", async function(next){
+    if(!this.isModified("password")) return next()
+    
+    this.password = await bcrypt.hash(this.password, 10)
+    next()
+}) 
 
 
 
