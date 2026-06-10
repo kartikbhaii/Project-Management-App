@@ -1,5 +1,47 @@
 import mailgen from "mailgen"
+import nodemailer from "nodemailer"
 
+// to sending the email using nodejs (nodemailer pkg and mailtrap)
+const sendEmail = async (options) => {
+    const mailGenerator = new Mailgen({
+        theme: "default",
+        product: {
+            name: "Task Manager",
+            link: "https://taskmanagelink.com"
+        }
+    })
+
+    const emailTextual = mailGenerator.generatePlainText(options.mailgenContent)
+    const emailHtml = mailGenerator.generate(options.mailgenContent)
+
+
+    // this help to send mails. credentials are from "mailtrap" website.
+    const transporter = nodemailer.creteTransport({
+        host: process.env.MAILTRAP_SMTP_HOST,
+        port: process.env.MAILTRAP_SMTP_PORT,
+        auth: {
+            user: process.env.MAILTRAP_SMTP_USER,
+            pass: process.env.MAILTRAP_SMTP_PASS
+        }
+        
+    })
+
+    const mail = {
+        from: "mail.taskmanager@example.com",
+        to: options.email,
+        subject: options.subject,
+        text: emailTextual,
+        html: emailHtml
+    }
+
+    try {
+        await transporter.sendEmail(mail)
+    } catch (error) {
+        console.error("Email service failed silently. Make sure that you have provided your MAILTRAP credentials in the .env file")
+        console.error("Error: ", error)
+    }
+
+}
 
 
 const emailVerificationMailgenContent = (username, verficationUrl) => {
@@ -42,5 +84,6 @@ const forgotPasswordMailgenContent = (username, passwordResetUrl) => {
 
 export {
     emailVerificationMailgenContent,
-    forgotPasswordMailgenContent
+    forgotPasswordMailgenContent,
+    sendEmail,
 }
