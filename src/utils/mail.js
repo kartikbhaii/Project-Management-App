@@ -1,4 +1,4 @@
-import mailgen from "mailgen"
+import Mailgen from "mailgen"
 import nodemailer from "nodemailer"
 
 // to sending the email using nodejs (nodemailer pkg and mailtrap)
@@ -11,12 +11,12 @@ const sendEmail = async (options) => {
         }
     })
 
-    const emailTextual = mailGenerator.generatePlainText(options.mailgenContent)
+    const emailTextual = mailGenerator.generatePlaintext(options.mailgenContent)
     const emailHtml = mailGenerator.generate(options.mailgenContent)
 
 
     // this help to send mails. credentials are from "mailtrap" website.
-    const transporter = nodemailer.creteTransport({
+    const transporter = nodemailer.createTransport({
         host: process.env.MAILTRAP_SMTP_HOST,
         port: process.env.MAILTRAP_SMTP_PORT,
         auth: {
@@ -35,7 +35,7 @@ const sendEmail = async (options) => {
     }
 
     try {
-        await transporter.sendEmail(mail)
+        await transporter.sendMail(mail)
     } catch (error) {
         console.error("Email service failed silently. Make sure that you have provided your MAILTRAP credentials in the .env file")
         console.error("Error: ", error)

@@ -67,11 +67,10 @@ const userSchema = new mongoose.Schema(
 
 // encrypting/hash the password before saving to mongoose so it doent save password as plain text: (called "pre Hook")
 
-userSchema.pre("save", async function(next){
-    if(!this.isModified("password")) return next()
+userSchema.pre("save", async function(){
+    if(!this.isModified("password")) return
     
     this.password = await bcrypt.hash(this.password, 10)
-    next()
 }) 
 
 // checking if entered password is same as registered password

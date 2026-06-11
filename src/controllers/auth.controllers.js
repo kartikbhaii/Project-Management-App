@@ -23,23 +23,23 @@ const generateAccessAndRefereshTokens = async (userId) => {
 }
 
 
-const registerUser = asyncHandler (async (requestAnimationFrame,res) => {
+const registerUser = asyncHandler (async (req,res) => {
     const {email, username, password, role} = req.body
 
     const existedUser = await User.findOne({
-        $or: [{username}, [email]]
+        $or: [{username}, {email}]
     })
 
     if(existedUser){
         throw new ApiError(409, "User with email/username already exists", [])
-    } else{
-        const user = await User.create({
-            email,
-            password,
-            username,
-            isEmailVerified: false
-        })
-    }
+    } 
+    
+    const user = await User.create({
+        email,
+        password,
+        username,
+        isEmailVerified: false
+    })
 
     const {unHashedToken, hashedToken, tokenExpiry} = user.generateTemporaryToken()
 
