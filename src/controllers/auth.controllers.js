@@ -12,8 +12,8 @@ const generateAccessAndRefereshTokens = async (userId) => {
         const refreshToken = user.generateRefreshToken()
 
         user.refreshToken = refreshToken
-        await user.save({validateBeforeSave: false})
-        return {accessToken, refreshToken}
+        await user.save({ validateBeforeSave: false })
+        return { accessToken, refreshToken }
     } catch (error) {
         throw new ApiError(
             500,
@@ -23,17 +23,17 @@ const generateAccessAndRefereshTokens = async (userId) => {
 }
 
 
-const registerUser = asyncHandler (async (req,res) => {
-    const {email, username, password, role} = req.body
+const registerUser = asyncHandler(async (req, res) => {
+    const { email, username, password, role } = req.body
 
     const existedUser = await User.findOne({
-        $or: [{username}, {email}]
+        $or: [{ username }, { email }]
     })
 
-    if(existedUser){
+    if (existedUser) {
         throw new ApiError(409, "User with email/username already exists", [])
-    } 
-    
+    }
+
     const user = await User.create({
         email,
         password,
@@ -41,12 +41,12 @@ const registerUser = asyncHandler (async (req,res) => {
         isEmailVerified: false
     })
 
-    const {unHashedToken, hashedToken, tokenExpiry} = user.generateTemporaryToken()
+    const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken()
 
     user.emailVerificationToken = hashedToken
     user.emailVerificationExpiry = tokenExpiry
 
-    await user.save({validateBeforeSave: false})
+    await user.save({ validateBeforeSave: false })
 
     await sendEmail(
         {
@@ -55,46 +55,46 @@ const registerUser = asyncHandler (async (req,res) => {
             mailgenContent: emailVerificationMailgenContent(user.username, `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`)
         }
     );
-    
+
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
     )
-    if(!createdUser){
+    if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering a user")
     }
 
     return res
-    .status(200)
-    .json(new ApiResponse(
-        200, 
-        {user: createdUser},
-        "User registered successfully and verification email has been sent to you email."
-    )
-)
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            { user: createdUser },
+            "User registered successfully and verification email has been sent to you email."
+        )
+        )
 
 })
 
 
-const login = asyncHandler( async (req,res) => {
-    const {email, password, username} = req.body
+const login = asyncHandler(async (req, res) => {
+    const { email, password, username } = req.body
 
-    if(!email){
+    if (!email) {
         throw new ApiError(400, "Email is required")
     }
 
-    const user = await User.findOne({email})
+    const user = await User.findOne({ email })
 
-    if(!user){
+    if (!user) {
         throw new ApiError(400, "User does not exists")
     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password) 
+    const isPasswordValid = await user.isPasswordCorrect(password)
 
-    if(!isPasswordValid){
+    if (!isPasswordValid) {
         throw new ApiError(400, "Invalid credentials")
     }
 
-    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
 
     const loggedInUser = await User.findById(user._id).select(
         "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
@@ -102,7 +102,7 @@ const login = asyncHandler( async (req,res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === "production"
     }
 
     return res
@@ -123,8 +123,36 @@ const login = asyncHandler( async (req,res) => {
 
 })
 
+const logoutUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: "",
+            }
+        },
+        {
+            new: true,
+        },
+    );
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production"
+    }
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(
+            new ApiResponse(200, {}, "User logged out")
+        )
 
-export {registerUser, login}
+
+})
+
+
+
+export { registerUser, login, logoutUser }
 
 
 
