@@ -1,6 +1,5 @@
 import { body } from "express-validator"
 
-
 // writing validation code: to check if they follow the below conditions then they valid.
 const userRegisterValidator = () => {
     return [
@@ -31,8 +30,22 @@ const userRegisterValidator = () => {
     ]
 }
 
+const userLoginValidator = () => {
+    return[
+        body("email")
+            .optional()
+            .isEmail()
+            .withMessage("Email is invalid"),
 
+        body("password")
+            .notEmpty()
+            .withMessage("Password is required"),
+
+
+    ]
+}
 
 export {
-    userRegisterValidator
+    userRegisterValidator,
+    userLoginValidator
 }
